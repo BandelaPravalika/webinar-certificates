@@ -111,11 +111,11 @@ public class PdfGeneratorService {
             try {
                 if (isoBytes != null) {
                     Image isoImg = Image.getInstance(isoBytes);
-                    isoImg.scaleToFit(160f, 160f); 
+                    isoImg.scaleToFit(190f, 190f); 
                     
                     float imgW = isoImg.getScaledWidth();
-                    float imgX = w - 185f;
-                    float imgY = h - 135f;
+                    float imgX = w - 210f;
+                    float imgY = h - 145f;
 
                     // Small dark blue rectangle tab exactly behind ISO, stretching to top
                     float hangerWidth = 30f;
@@ -262,13 +262,13 @@ public class PdfGeneratorService {
             if (gy1Bytes != null) {
                 Image centerLogo = Image.getInstance(gy1Bytes);
                 centerLogo.scaleToFit(90f, 90f);
-                centerLogo.setAbsolutePosition(cx - 45f, sigY + 10f);
+                centerLogo.setAbsolutePosition(cx - 45f, sigY);
                 cb.addImage(centerLogo);
             }
             cb.setColorFill(new Color(58, 143, 212)); // #3a8fd4
-            drawCenteredText(cb, bfHelvBold, 18f, "Gyantrix", cx, sigY - 5f);
+            drawCenteredText(cb, bfHelvBold, 18f, "Gyantrix", cx, sigY - 10f);
             cb.setColorFill(new Color(112, 96, 192)); // #7060c0
-            drawCenteredText(cb, bfHelvReg, 14f, "Academy", cx, sigY - 22f);
+            drawCenteredText(cb, bfHelvReg, 14f, "Academy", cx, sigY - 27f);
 
             // ── Footer Date & ID ───────────────────────────────────────────────────────
             float footerY = totalPadding + 28f;

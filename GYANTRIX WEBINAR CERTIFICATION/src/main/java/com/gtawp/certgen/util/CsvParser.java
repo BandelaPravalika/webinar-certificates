@@ -45,18 +45,22 @@ public class CsvParser {
                     }
                 }
 
-                if (record.length >= 2) { // Allow name and email at minimum
+                if (record.length >= 3) {
+                    CertificateRequest request = new CertificateRequest();
+                    request.setStudentName(record[0].trim());
+                    request.setWebinarName(record[1].trim());
+                    request.setEmail(record[2].trim());
+                    
+                    if (!request.getStudentName().isEmpty() && isEmail(request.getEmail())) {
+                        requests.add(request);
+                    }
+                } else if (record.length == 2) {
+                    // Fallback for Name, Email format
                     CertificateRequest request = new CertificateRequest();
                     request.setStudentName(record[0].trim());
                     request.setEmail(record[1].trim());
+                    request.setWebinarName("Webinar Participant");
                     
-                    // Webinar name might be in index 2 or mapped to a default
-                    if (record.length >= 3) {
-                        request.setWebinarName(record[2].trim());
-                    } else if (record.length == 2 && isEmail(record[1])) {
-                        request.setWebinarName("Webinar Participant"); // Default fallback
-                    }
-
                     if (!request.getStudentName().isEmpty() && isEmail(request.getEmail())) {
                         requests.add(request);
                     }
