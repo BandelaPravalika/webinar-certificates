@@ -1,0 +1,212 @@
+{
+	"info": {
+		"_postman_id": "7a3b4c1d-8e2f-4a0b-9c5d-6e7f8a9b0c1d",
+		"name": "GTAWP Certificate Generator",
+		"description": "APIs for Bulk Certificate Generation and Email Automation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Certificates",
+			"item": [
+				{
+					"name": "Get All Certificates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/certificates",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"certificates"
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    pm.expect(pm.response.json()).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Sent Certificates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/certificates/sent",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"certificates",
+								"sent"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Failed Certificates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/certificates/failed",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"certificates",
+								"failed"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Processing Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/certificates/stats",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"certificates",
+								"stats"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Actions",
+			"item": [
+				{
+					"name": "Upload CSV",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/certificates/upload",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"certificates",
+								"upload"
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Upload message present\", function () {",
+									"    pm.expect(pm.response.json().message).to.be.a('string');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Single Certificate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"studentName\": \"John Doe\",\n    \"webinarName\": \"Spring Boot Basics\",\n    \"email\": \"john@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/certificates/single",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"certificates",
+								"single"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Retry Failed",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/certificates/retry-failed",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"certificates",
+								"retry-failed"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}
