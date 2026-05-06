@@ -14,18 +14,22 @@ import java.time.format.DateTimeFormatter;
 @RequiredArgsConstructor
 @Slf4j
 public class CertificateIdGenerator {
-    
+
     private static final String PREFIX = "GTAWP";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("ddMM");
+
+    // Fixed global key — counter NEVER resets across days
+    private static final String GLOBAL_KEY = "GLOBAL";
+
     private final WebinarSequenceRepository sequenceRepository;
 
     @Transactional
     public synchronized String generateCertificateId() {
-        String dateKey = LocalDate.now().format(DATE_FORMATTER);
-        WebinarSequence sequence = sequenceRepository.findByDateKeyForUpdate(dateKey)
+        // Always use the same GLOBAL key so counter is continuous
+        WebinarSequence sequence = sequenceRepository.findByDateKeyForUpdate(GLOBAL_KEY)
                 .orElseGet(() -> {
                     WebinarSequence newSeq = new WebinarSequence();
-                    newSeq.setDateKey(dateKey);
+                    newSeq.setDateKey(GLOBAL_KEY);
                     newSeq.setLastCounter(0);
                     return newSeq;
                 });
@@ -34,6 +38,8 @@ public class CertificateIdGenerator {
         sequence.setLastCounter(nextCounter);
         sequenceRepository.save(sequence);
 
+        // Date is today's date (just for display in the ID), counter is global
+        String dateKey = LocalDate.now().format(DATE_FORMATTER);
         return String.format("%s%s%04d", PREFIX, dateKey, nextCounter);
     }
 }

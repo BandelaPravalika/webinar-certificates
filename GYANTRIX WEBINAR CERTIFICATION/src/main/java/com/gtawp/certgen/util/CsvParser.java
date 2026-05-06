@@ -49,14 +49,20 @@ public class CsvParser {
             // Map headers to indices (case-insensitive)
             int issueDateIdx = -1;
             int fullNameIdx = -1;
-            int emailIdx = -1;
+            int emailIdx = -1;       // Email Address column (fallback)
+            int emailIdIdx = -1;     // EMAIL ID column (preferred)
 
             for (int i = 0; i < headers.length; i++) {
-                String header = headers[i].toLowerCase().trim();
-                if (header.equals("timestamp")) issueDateIdx = i;
-                else if (header.equals("full name for certificate")) fullNameIdx = i;
-                else if (header.equals("email address") || header.equals("email id") || header.equals("email") || header.equals("mail id")) emailIdx = i;
+                String header = headers[i].toLowerCase().replaceAll("\\s+", " ").trim().replace("\uFEFF", "");
+                if (header.contains("timestamp") || header.contains("date")) issueDateIdx = i;
+                else if (header.contains("full name") || header.contains("name for certificate") || header.equals("name")) fullNameIdx = i;
+                else if (header.equals("email id") || header.equals("mail id")) emailIdIdx = i;  // exact EMAIL ID match — highest priority
+                else if (header.contains("email") || header.contains("mail")) emailIdx = i;       // generic email — fallback
             }
+
+            // Prefer EMAIL ID column; fall back to Email Address if not found
+            int resolvedEmailIdx = (emailIdIdx != -1) ? emailIdIdx : emailIdx;
+            emailIdx = resolvedEmailIdx;
 
             if (issueDateIdx == -1 || fullNameIdx == -1) {
                 log.error("Missing required headers: Timestamp or FULL NAME FOR CERTIFICATE");
