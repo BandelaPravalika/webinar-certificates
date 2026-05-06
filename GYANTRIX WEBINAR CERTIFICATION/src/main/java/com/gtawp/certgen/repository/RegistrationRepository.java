@@ -10,4 +10,5 @@ import java.util.Optional;
 @Repository
 public interface RegistrationRepository extends JpaRepository<Registration, Long> {
     Optional<Registration> findByEmailAndWebinar(String email, Webinar webinar);
+    Optional<Registration> findByPhoneAndWebinar(String phone, Webinar webinar);
 }

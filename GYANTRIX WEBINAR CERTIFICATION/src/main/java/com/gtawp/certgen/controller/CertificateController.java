@@ -31,10 +31,12 @@ public class CertificateController {
     private final FileStorageService fileStorageService;
     private final CertificateRepository certificateRepository;
 
-    @PostMapping("/upload")
+    @PostMapping("/upload-csv")
     @Operation(summary = "Upload CSV for bulk certificate processing")
-    public ResponseEntity<UploadResponse> uploadCsv(@RequestParam("file") MultipartFile file) {
-        UploadResponse response = certificateService.processCsvUpload(file);
+    public ResponseEntity<UploadResponse> uploadCsv(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("webinarName") String webinarName) {
+        UploadResponse response = certificateService.processCsvUpload(file, webinarName);
         return ResponseEntity.ok(response);
     }
 

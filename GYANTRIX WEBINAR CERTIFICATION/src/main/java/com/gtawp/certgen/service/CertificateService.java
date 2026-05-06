@@ -9,6 +9,7 @@ import com.gtawp.certgen.entity.Registration;
 import com.gtawp.certgen.repository.CertificateRepository;
 import com.gtawp.certgen.util.CertificateIdGenerator;
 import com.gtawp.certgen.util.CsvParser;
+import com.gtawp.certgen.util.DateFormatterUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -32,15 +34,20 @@ public class CertificateService {
     private final CsvParser csvParser;
     private static final int MAX_RETRIES = 3;
 
-    public UploadResponse processCsvUpload(MultipartFile file) {
-        List<CertificateRequest> requests = csvParser.parseCsv(file);
+    public UploadResponse processCsvUpload(MultipartFile file, String webinarName) {
+        List<CertificateRequest> requests = csvParser.parseCsv(file, webinarName);
         int validCount = 0;
 
+        List<Certificate> certificatesToSave = new java.util.ArrayList<>();
         for (CertificateRequest request : requests) {
             if (isValidRequest(request)) {
-                createPendingCertificate(request);
+                certificatesToSave.add(buildPendingCertificate(request, null));
                 validCount++;
             }
+        }
+
+        if (!certificatesToSave.isEmpty()) {
+            certificateRepository.saveAll(certificatesToSave);
         }
 
         processPendingCertificatesAsync();
@@ -48,12 +55,16 @@ public class CertificateService {
     }
 
     public UploadResponse processSingleRequest(CertificateRequest request, Registration registration) {
+        if (request.getIssueDate() == null || request.getIssueDate().trim().isEmpty()) {
+            request.setIssueDate(LocalDate.now().toString());
+        }
+        
         if (isValidRequest(request)) {
             createPendingCertificate(request, registration);
             processPendingCertificatesAsync();
             return new UploadResponse("Processing started for 1 record");
         }
-        return new UploadResponse("Invalid request data: please check name, email, and webinar name");
+        return new UploadResponse("Invalid request data: please check name, email, webinar name, and issue date");
     }
 
     public UploadResponse processSingleRequest(CertificateRequest request) {
@@ -63,18 +74,25 @@ public class CertificateService {
     private boolean isValidRequest(CertificateRequest request) {
         return request.getStudentName() != null && !request.getStudentName().trim().isEmpty() &&
                request.getWebinarName() != null && !request.getWebinarName().trim().isEmpty() &&
-               request.getEmail() != null && request.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$");
+               request.getIssueDate() != null && !request.getIssueDate().trim().isEmpty() &&
+               request.getEmail() != null && request.getEmail().contains("@");
     }
 
-    @Transactional
-    public Certificate createPendingCertificate(CertificateRequest request, Registration registration) {
+    private Certificate buildPendingCertificate(CertificateRequest request, Registration registration) {
         Certificate certificate = new Certificate();
         certificate.setStudentName(request.getStudentName());
         certificate.setWebinarName(request.getWebinarName());
         certificate.setEmail(request.getEmail());
+        certificate.setIssueDate(DateFormatterUtil.formatToStandard(request.getIssueDate()));
         certificate.setCertificateId(idGenerator.generateCertificateId());
         certificate.setStatus(CertificateStatus.PENDING);
         certificate.setRegistration(registration);
+        return certificate;
+    }
+
+    @Transactional
+    public Certificate createPendingCertificate(CertificateRequest request, Registration registration) {
+        Certificate certificate = buildPendingCertificate(request, registration);
         return certificateRepository.save(certificate);
     }
 
@@ -83,12 +101,13 @@ public class CertificateService {
         return createPendingCertificate(request, null);
     }
 
-    @Async
     public void processPendingCertificatesAsync() {
-        List<Certificate> pendingCertificates = certificateRepository.findByStatus(CertificateStatus.PENDING);
-        log.info("Processing {} pending certificates", pendingCertificates.size());
+        CompletableFuture.runAsync(() -> {
+            List<Certificate> pendingCertificates = certificateRepository.findByStatus(CertificateStatus.PENDING);
+            log.info("Processing {} pending certificates", pendingCertificates.size());
 
-        pendingCertificates.forEach(this::processCertificateAsync);
+            pendingCertificates.forEach(this::processCertificateAsync);
+        });
     }
 
     private CompletableFuture<Void> processCertificateAsync(Certificate certificate) {

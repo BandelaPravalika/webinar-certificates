@@ -37,6 +37,9 @@ public class RegistrationController {
         if (request.getEmail() == null || request.getEmail().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
         }
+        if (!request.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid email format"));
+        }
         if (!request.isConfirmation()) {
             return ResponseEntity.badRequest().body(Map.of("error", "You must confirm your details"));
         }
@@ -52,7 +55,10 @@ public class RegistrationController {
 
         // 4. Check for Duplicate Registration
         if (registrationRepository.findByEmailAndWebinar(request.getEmail(), webinar).isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Already submitted"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Email already submitted for this webinar"));
+        }
+        if (registrationRepository.findByPhoneAndWebinar(request.getPhone(), webinar).isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Phone number already submitted for this webinar"));
         }
 
         // 5. Save Registration

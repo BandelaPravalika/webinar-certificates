@@ -9,4 +9,5 @@ public class CertificateRequest {
     private String studentName;
     private String webinarName;
     private String email;
+    private String issueDate;
 }

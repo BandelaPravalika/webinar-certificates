@@ -16,55 +16,83 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CsvParser {
 
-    public List<CertificateRequest> parseCsv(MultipartFile file) {
+    public List<CertificateRequest> parseCsv(MultipartFile file, String webinarName) {
         List<CertificateRequest> requests = new ArrayList<>();
         
         log.info("Processing upload. Filename: {}, ContentType: {}, Size: {} bytes", 
                 file.getOriginalFilename(), file.getContentType(), file.getSize());
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-            // Read lines manually first to detect the best delimiter
-            List<String> lines = reader.lines().collect(Collectors.toList());
-            if (lines.isEmpty()) return requests;
+            // Read first line to detect delimiter
+            reader.mark(1024);
+            String firstLine = reader.readLine();
+            reader.reset();
+            
+            if (firstLine == null) return requests;
+            
+            char delimiter = ',';
+            if (firstLine.contains("\t")) delimiter = '\t';
+            else if (firstLine.contains(";")) delimiter = ';';
+            
+            com.opencsv.CSVParser parser = new com.opencsv.CSVParserBuilder()
+                    .withSeparator(delimiter)
+                    .build();
+            
+            CSVReader csvReader = new com.opencsv.CSVReaderBuilder(reader)
+                    .withCSVParser(parser)
+                    .build();
+            
+            String[] headers = csvReader.readNext();
+            
+            if (headers == null) return requests;
 
-            char delimiter = detectDelimiter(lines.get(0));
-            log.info("Detected delimiter: '{}'", delimiter == '\t' ? "\\t" : delimiter);
+            // Map headers to indices (case-insensitive)
+            int issueDateIdx = -1;
+            int fullNameIdx = -1;
+            int emailIdx = -1;
 
-            boolean firstLine = true;
-            for (String line : lines) {
-                if (line.trim().isEmpty()) continue;
+            for (int i = 0; i < headers.length; i++) {
+                String header = headers[i].toLowerCase().trim();
+                if (header.equals("timestamp")) issueDateIdx = i;
+                else if (header.equals("full name for certificate")) fullNameIdx = i;
+                else if (header.equals("email address") || header.equals("email id") || header.equals("email") || header.equals("mail id")) emailIdx = i;
+            }
 
-                // Split by detected delimiter
-                String[] record = splitLine(line, delimiter);
+            if (issueDateIdx == -1 || fullNameIdx == -1) {
+                log.error("Missing required headers: Timestamp or FULL NAME FOR CERTIFICATE");
+                return requests;
+            }
 
-                if (firstLine) {
-                    firstLine = false;
-                    if (isHeader(record)) {
-                        log.debug("Skipping header line: {}", line);
-                        continue;
-                    }
+            String[] record;
+            while ((record = csvReader.readNext()) != null) {
+                if (record.length <= Math.max(issueDateIdx, fullNameIdx)) continue;
+
+                String issuedateRaw = record[issueDateIdx].trim();
+                String fullname = record[fullNameIdx].trim();
+                String email = (emailIdx != -1 && record.length > emailIdx) ? record[emailIdx].trim() : "";
+
+                // Validation: fullname is null or empty → skip
+                if (fullname.isEmpty()) {
+                    log.warn("Skipping row: missing fullname");
+                    continue;
                 }
 
-                if (record.length >= 3) {
-                    CertificateRequest request = new CertificateRequest();
-                    request.setStudentName(record[0].trim());
-                    request.setWebinarName(record[1].trim());
-                    request.setEmail(record[2].trim());
-                    
-                    if (!request.getStudentName().isEmpty() && isEmail(request.getEmail())) {
-                        requests.add(request);
-                    }
-                } else if (record.length == 2) {
-                    // Fallback for Name, Email format
-                    CertificateRequest request = new CertificateRequest();
-                    request.setStudentName(record[0].trim());
-                    request.setEmail(record[1].trim());
-                    request.setWebinarName("Webinar Participant");
-                    
-                    if (!request.getStudentName().isEmpty() && isEmail(request.getEmail())) {
-                        requests.add(request);
-                    }
+                // Validation: issuedate is null or empty → skip
+                if (issuedateRaw.isEmpty()) {
+                    log.warn("Skipping row: missing issuedate");
+                    continue;
                 }
+
+                // Date Cleaning: Remove time from issuedate (e.g., 2026-05-01 10:30:45 -> 2026-05-01)
+                String issuedate = issuedateRaw.split(" ")[0];
+
+                CertificateRequest request = new CertificateRequest();
+                request.setStudentName(fullname);
+                request.setIssueDate(issuedate);
+                request.setWebinarName(webinarName); // Provided by admin
+                request.setEmail(email);
+                
+                requests.add(request);
             }
         } catch (Exception e) {
             log.error("CSV parsing failed for file {}: {}", file.getOriginalFilename(), e.getMessage());
@@ -75,27 +103,7 @@ public class CsvParser {
         return requests;
     }
 
-    private char detectDelimiter(String line) {
-        if (line.contains("\t")) return '\t';
-        if (line.contains(";")) return ';';
-        return ','; // Default
-    }
-
-    private String[] splitLine(String line, char delimiter) {
-        if (delimiter == '\t') return line.split("\t");
-        if (delimiter == ';') return line.split(";");
-        // For commas, use a simple split or more complex regex if quotes are needed
-        return line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-    }
-
     private boolean isEmail(String email) {
         return email != null && email.contains("@") && email.contains(".");
-    }
-
-    private boolean isHeader(String[] record) {
-        if (record == null || record.length == 0) return false;
-        String first = record[0].toLowerCase();
-        String second = record.length > 1 ? record[1].toLowerCase() : "";
-        return first.contains("name") || second.contains("email") || first.contains("webinar");
     }
 }

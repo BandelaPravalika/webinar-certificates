@@ -9,7 +9,6 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import jakarta.mail.internet.MimeMessage;
 
-import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +18,6 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final PdfGeneratorService pdfGeneratorService;
     private final FileStorageService fileStorageService;
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     public void sendCertificateEmail(Certificate certificate, int retryCount) {
         try {
@@ -29,7 +27,7 @@ public class EmailService {
                     .setWebinarName(certificate.getWebinarName())
                     .setEmail(certificate.getEmail()),
                 certificate.getCertificateId(),
-                certificate.getIssueDate().format(DATE_FORMATTER)
+                certificate.getIssueDate()
             );
 
             // Save to backend storage
@@ -44,7 +42,7 @@ public class EmailService {
                 certificate.getStudentName(),
                 certificate.getWebinarName(),
                 certificate.getCertificateId(),
-                certificate.getIssueDate().format(DATE_FORMATTER)
+                certificate.getIssueDate()
             );
 
             helper.setTo(certificate.getEmail());

@@ -2,6 +2,7 @@ package com.gtawp.certgen.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -29,7 +30,7 @@ public class Certificate {
     private String certificateId;
 
     @Column(nullable = false)
-    private LocalDateTime issueDate;
+    private String issueDate;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -47,7 +48,7 @@ public class Certificate {
             createdAt = LocalDateTime.now();
         }
         if (issueDate == null) {
-            issueDate = LocalDateTime.now();
+            issueDate = LocalDate.now().toString();
         }
     }
 }

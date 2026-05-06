@@ -223,9 +223,9 @@ public class PdfGeneratorService {
             float leftCenterX = totalPadding + 120f;
             float rightCenterX = w - totalPadding - 120f;
 
-            // Left (N. Meghana)
+            // Left (N. surya)
             cb.setColorFill(NAVY);
-            drawCenteredText(cb, bfGreatVibes, 30f, "N. Meghana", leftCenterX, sigY + 25);
+            drawCenteredText(cb, bfGreatVibes, 30f, "N. surya", leftCenterX, sigY + 25);
 
             // line
             cb.setColorStroke(TEXT_BLACK);
@@ -236,9 +236,9 @@ public class PdfGeneratorService {
 
             // designation
             cb.setColorFill(NAVY);
-            drawCenteredText(cb, bfHelvBold, 12f, "N. MEGHANA", leftCenterX, sigY - 10);
+            drawCenteredText(cb, bfHelvBold, 12f, "N. SURYA", leftCenterX, sigY - 10);
             cb.setColorFill(TEXT_GRAY);
-            drawCenteredText(cb, bfHelvReg, 11f, "Asst. Operations Manager", leftCenterX, sigY - 24);
+            drawCenteredText(cb, bfHelvReg, 11f, "Operational Manager", leftCenterX, sigY - 24);
 
 
             // Right (Varalakshmi)
