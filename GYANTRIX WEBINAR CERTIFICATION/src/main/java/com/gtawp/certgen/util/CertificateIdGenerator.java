@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import jakarta.annotation.PostConstruct;
 
 @Component
 @RequiredArgsConstructor
@@ -22,6 +23,23 @@ public class CertificateIdGenerator {
     private static final String GLOBAL_KEY = "GLOBAL";
 
     private final WebinarSequenceRepository sequenceRepository;
+    
+    @PostConstruct
+    @Transactional
+    public void initSequence() {
+        WebinarSequence sequence = sequenceRepository.findByDateKeyForUpdate(GLOBAL_KEY)
+                .orElseGet(() -> {
+                    WebinarSequence newSeq = new WebinarSequence();
+                    newSeq.setDateKey(GLOBAL_KEY);
+                    newSeq.setLastCounter(8539);
+                    return newSeq;
+                });
+        if (sequence.getLastCounter() < 8539) {
+            log.info("Updating global certificate sequence from {} to 8539", sequence.getLastCounter());
+            sequence.setLastCounter(8539);
+            sequenceRepository.save(sequence);
+        }
+    }
 
     @Transactional
     public synchronized String generateCertificateId() {
@@ -30,7 +48,7 @@ public class CertificateIdGenerator {
                 .orElseGet(() -> {
                     WebinarSequence newSeq = new WebinarSequence();
                     newSeq.setDateKey(GLOBAL_KEY);
-                    newSeq.setLastCounter(8558);
+                    newSeq.setLastCounter(8539);
                     return newSeq;
                 });
 
