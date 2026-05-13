@@ -30,7 +30,7 @@ public class CertificateIdGenerator {
                 .orElseGet(() -> {
                     WebinarSequence newSeq = new WebinarSequence();
                     newSeq.setDateKey(GLOBAL_KEY);
-                    newSeq.setLastCounter(0);
+                    newSeq.setLastCounter(8435);
                     return newSeq;
                 });
 
